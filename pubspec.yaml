@@ -1,0 +1,50 @@
+name: milfit
+description: Application de suivi sportif militaire sécurisée
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # --- SÉCURITÉ & CHIFFREMENT ---
+  flutter_secure_storage: ^9.0.0     # Stockage sécurisé (KeyStore Android / Keychain iOS)
+  sodium_libs: ^2.1.0                # libsodium (AES-256, ChaCha20, clés asymétriques)
+  sqflite: ^2.3.0                    # SQLite local
+  sqflite_sqlcipher: ^2.2.0          # SQLite chiffré (remplace sqflite standard)
+
+  # --- GPS & CAPTEURS ---
+  geolocator: ^11.0.0                # Accès GPS précis
+  sensors_plus: ^4.0.0               # Accéléromètre, gyroscope
+
+  # --- RÉSEAU & ÉTAT ---
+  connectivity_plus: ^6.0.0          # Détection réseau (WiFi/4G/hors-ligne)
+  dio: ^5.4.0                        # Client HTTP avec intercepteurs
+  http_certificate_pinning: ^3.0.1    # Certificate pinning anti-MITM
+
+  # --- CARTOGRAPHIE OSM ---
+  flutter_map: ^6.1.0                # Carte OpenStreetMap
+  latlong2: ^0.9.0                   # Types de coordonnées géographiques
+
+  # --- ÉTAT & NAVIGATION ---
+  flutter_riverpod: ^2.5.0           # Gestion d'état (recommandé pour les apps complexes)
+  go_router: ^13.0.0                 # Navigation déclarative
+
+  # --- UI ---
+  cupertino_icons: ^1.0.6
+
+  # --- Anti-Tracking ---
+  flutter_map_cache: ^2.0.0  # Pour garder les tuiles localement
+  path_provider: ^2.1.0      # Pour savoir où stocker sur Android
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.0
+
+flutter:
+  uses-material-design: true
