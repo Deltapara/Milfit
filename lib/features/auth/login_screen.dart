@@ -14,7 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
-      // TODO: Ici on appellera le AuthService pour le MFA
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Code de vérification envoyé sur boîte intradef')),
       );
