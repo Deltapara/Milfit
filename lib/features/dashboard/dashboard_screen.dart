@@ -21,8 +21,15 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
       // ----------------------------
-      body: const Center(
-        child: Text("Tableau de Bord - Ghost Track Actif"),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _buildStatusCard(),
+            const SizedBox(height: 16),
+            const Center(child: Text("Aucune activité récente")),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.go('/record'),

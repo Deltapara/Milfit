@@ -146,12 +146,18 @@ class _RecordScreenState extends State<RecordScreen> {
               initialZoom: 15.0,
             ),
             children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'fr.defense.milfit',
-                // ON UTILISE LE PROVIDER PAR DÉFAUT POUR L'INSTANT POUR ÉVITER L'ERREUR DE COMPILATION
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'fr.defense.milfit',
+              tileProvider: CachedTileProvider(
+                store: FileCacheStore(
+                  FileCacheOptions(
+                      cacheDirectory: await getApplicationCacheDirectory(),
+                  ),
+                ),
               ),
-              PolylineLayer(
+            ),
+                PolylineLayer(
                 polylines: [
                   Polyline(
                     points: _rawPoints.map((p) => LatLng(p.$1, p.$2)).toList(),
