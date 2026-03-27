@@ -3,8 +3,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-// On garde l'import, mais on va simplifier le TileLayer dessous
 import 'package:flutter_map_cache/flutter_map_cache.dart';
+import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 
 import '../../core/gps/gps_fuzzer.dart';
 import '../../core/security/crypto_service.dart';
@@ -18,10 +18,11 @@ class RecordScreen extends StatefulWidget {
 
 class _RecordScreenState extends State<RecordScreen> {
   bool _isRecording = false;
-  List<(double, double)> _rawPoints = [];
+  final List<(double, double)> _rawPoints = [];
   final _crypto = CryptoService();
   final MapController _mapController = MapController();
   LatLng? _currentLocation;
+  final CacheStore _cacheStore = MemCacheStore();// ← stocké ici pour éviter le await dans build()
 
   @override
   void initState() {
@@ -30,28 +31,20 @@ class _RecordScreenState extends State<RecordScreen> {
     _determineInitialPosition();
   }
 
+
   Future<void> _determineInitialPosition() async {
     try {
-      // 1. Vérifier si les services de localisation sont activés
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        debugPrint("GPS: Services désactivés.");
-        return;
-      }
+      if (!serviceEnabled) return;
 
-      // 2. Vérifier et demander les permissions
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          debugPrint("GPS: Permission refusée.");
-          return;
-        }
+        if (permission == LocationPermission.denied) return;
       }
 
-      // 3. Obtenir la position
-      Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
       );
 
       if (!mounted) return;
@@ -59,18 +52,16 @@ class _RecordScreenState extends State<RecordScreen> {
         _currentLocation = LatLng(position.latitude, position.longitude);
       });
       _mapController.move(_currentLocation!, 15.0);
-
-      // 4. Lancer l'écoute automatique dès qu'on a la position initiale
       _startGpsStream();
     } catch (e) {
-      debugPrint("Erreur position initiale: $e");
+      debugPrint('Erreur position initiale: $e');
     }
   }
 
   void _toggleRecording() {
     if (_isRecording) {
-      final fuzzedPoints = GpsFuzzer.fuzzTrace(_rawPoints);
-      _saveActivity(fuzzedPoints);
+      final fuzzed = GpsFuzzer.fuzzTrace(_rawPoints);
+      _saveActivity(fuzzed);
       setState(() => _isRecording = false);
     } else {
       _rawPoints.clear();
@@ -81,40 +72,44 @@ class _RecordScreenState extends State<RecordScreen> {
 
   void _startGpsStream() {
     Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 3)
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 3,
+      ),
     ).listen((position) {
       if (!mounted) return;
-      final newPoint = LatLng(position.latitude, position.longitude);
+      final point = LatLng(position.latitude, position.longitude);
       setState(() {
-        _currentLocation = newPoint;
+        _currentLocation = point;
         if (_isRecording) {
           _rawPoints.add((position.latitude, position.longitude));
         }
       });
       if (_isRecording) {
-        _mapController.move(newPoint, _mapController.camera.zoom);
+        _mapController.move(point, _mapController.camera.zoom);
       }
     });
   }
 
   Future<void> _saveActivity(List<(double, double)> points) async {
-    debugPrint("LOG SÉCURITÉ : Trace de ${points.length} points sauvegardée.");
+    debugPrint('Trace de ${points.length} points sauvegardée (chiffrée).');
+    // TODO : brancher LocalDb + CryptoService ici (prochaine étape)
   }
 
-  void _showExitConfirmation(BuildContext context) {
+  void _showExitConfirmation() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Session en cours"),
-        content: const Text("Voulez-vous vraiment abandonner ?"),
+      builder: (_) => AlertDialog(
+        title: const Text('Session en cours'),
+        content: const Text('Voulez-vous vraiment abandonner ?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("NON")),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('NON')),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               context.go('/dashboard');
             },
-            child: const Text("OUI", style: TextStyle(color: Colors.red)),
+            child: const Text('OUI', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -125,16 +120,10 @@ class _RecordScreenState extends State<RecordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("SESSION TACTIQUE"),
+        title: const Text('SESSION TACTIQUE'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (_isRecording) {
-              _showExitConfirmation(context);
-            } else {
-              context.go('/dashboard');
-            }
-          },
+          onPressed: _isRecording ? _showExitConfirmation : () => context.go('/dashboard'),
         ),
       ),
       body: Stack(
@@ -146,18 +135,14 @@ class _RecordScreenState extends State<RecordScreen> {
               initialZoom: 15.0,
             ),
             children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'fr.defense.milfit',
-              tileProvider: CachedTileProvider(
-                store: FileCacheStore(
-                  FileCacheOptions(
-                      cacheDirectory: await getApplicationCacheDirectory(),
-                  ),
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'fr.defense.milfit',
+                tileProvider: CachedTileProvider(
+                  store: _cacheStore,
                 ),
               ),
-            ),
-                PolylineLayer(
+              PolylineLayer(
                 polylines: [
                   Polyline(
                     points: _rawPoints.map((p) => LatLng(p.$1, p.$2)).toList(),
@@ -191,7 +176,9 @@ class _RecordScreenState extends State<RecordScreen> {
             child: FloatingActionButton.small(
               heroTag: 'btn_gps',
               onPressed: () {
-                if (_currentLocation != null) _mapController.move(_currentLocation!, 15.0);
+                if (_currentLocation != null) {
+                  _mapController.move(_currentLocation!, 15.0);
+                }
               },
               backgroundColor: Colors.white,
               child: const Icon(Icons.my_location, color: Color(0xFF1B3A2D)),

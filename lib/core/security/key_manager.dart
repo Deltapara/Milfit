@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
+
 
 class KeyManager {
   final _storage = const FlutterSecureStorage();
@@ -22,7 +24,7 @@ class KeyManager {
 
     // 2. Sans la clé, la base SQLCipher devient un bloc de données aléatoires
     // totalement impossible à déchiffrer (Brute-force inutile).
-    print("ALERTE : Clés détruites. Données verrouillées à jamais.");
+    debugPrint("ALERTE : Clés détruites. Données verrouillées à jamais.");
   }
 
 }

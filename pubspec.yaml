@@ -40,6 +40,9 @@ dependencies:
   flutter_map_cache: ^2.0.0  # Pour garder les tuiles localement
   path_provider: ^2.1.0      # Pour savoir où stocker sur Android
 
+  path: ^1.9.0
+  dio_cache_interceptor: ^4.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

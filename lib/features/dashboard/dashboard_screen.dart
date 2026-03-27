@@ -41,9 +41,9 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildStatusCard() {
-    return Card(
+    return const Card(
       color: Colors.black45,
-      child: const ListTile(
+      child: ListTile(
         leading: Icon(Icons.security, color: Colors.green),
         title: Text("Système Ghost Track : ACTIF"),
         subtitle: Text("Localisation brouillée (Rayon 500m)"),
