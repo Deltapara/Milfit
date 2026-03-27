@@ -5,6 +5,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_map_cache/flutter_map_cache.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
+import '../../core/storage/activity_repository.dart';
+
+
 
 import '../../core/gps/gps_fuzzer.dart';
 import '../../core/security/crypto_service.dart';
@@ -91,9 +94,25 @@ class _RecordScreenState extends State<RecordScreen> {
     });
   }
 
+  final _repo = ActivityRepository();
+
   Future<void> _saveActivity(List<(double, double)> points) async {
-    debugPrint('Trace de ${points.length} points sauvegardée (chiffrée).');
-    // TODO : brancher LocalDb + CryptoService ici (prochaine étape)
+    if (points.isEmpty) return;
+    try {
+      await _repo.saveActivity(
+        points: points,
+        timestamp: DateTime.now(),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${points.length} points sauvegardés et chiffrés'),
+          backgroundColor: Colors.green.shade800,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Erreur sauvegarde : $e');
+    }
   }
 
   void _showExitConfirmation() {

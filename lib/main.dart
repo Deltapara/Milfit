@@ -9,6 +9,7 @@ import 'core/storage/local_db.dart';
 import 'features/auth/login_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/activity/record_screen.dart';
+import 'features/activity/activity_detail_screen.dart';
 
 void main() async {
   // 1. Indispensable pour l'accès aux couches basses (GPS, Crypto)
@@ -72,5 +73,6 @@ final _router = GoRouter(
     GoRoute(path: '/login', builder: (ctx, state) => const LoginScreen()),
     GoRoute(path: '/dashboard', builder: (ctx, state) => const DashboardScreen()),
     GoRoute(path: '/record', builder: (ctx, state) => const RecordScreen()),
+    GoRoute(path: '/activity', builder: (ctx, state) => ActivityDetailScreen(activity: state.extra as Map<String, dynamic>,),),
   ],
 );
