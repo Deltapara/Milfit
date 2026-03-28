@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/storage/activity_repository.dart';
+import '../../shared/models/sport_type.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -14,11 +15,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<Map<String, dynamic>> _activities = [];
   bool _loading = true;
 
+  // --- CALCULS ---
   double _calculateWeeklyTotal() {
     final weekAgo = DateTime.now().subtract(const Duration(days: 7));
-    return _activities
-        .where((a) => DateTime.parse(a['timestamp']).isAfter(weekAgo))
-        .fold(0.0, (sum, a) => sum + (a['distance'] ?? 0.0));
+    return _activities.where((a) {
+      final ts = a['timestamp'];
+      if (ts == null) return false;
+      return DateTime.parse(ts as String).isAfter(weekAgo);
+    }).fold(0.0, (sum, a) => sum + ((a['distance'] as num?) ?? 0.0));
   }
 
   @override
@@ -39,27 +43,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
+      backgroundColor: const Color(0xFF0F0F12), // Fond sombre tactique
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
+        backgroundColor: const Color(0xFF1E1E2E),
+        elevation: 0,
         centerTitle: true,
-        title: const Text(
-            'MILFIT COMMAND',
+        title: const Text('MILFIT COMMAND',
             style: TextStyle(
-                color: Colors.black,
+                color: Colors.white,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1.5,
-                fontSize: 16
-            )
-        ),
+                fontSize: 16)),
         leading: IconButton(
-          icon: const Icon(Icons.logout, color: Colors.black),
+          icon: const Icon(Icons.logout, color: Colors.white70),
           onPressed: () => context.go('/login'),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black),
+            icon: const Icon(Icons.refresh, color: Colors.white70),
             onPressed: () {
               setState(() => _loading = true);
               _loadActivities();
@@ -68,40 +69,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF1B3A2D)))
+          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
           : RefreshIndicator(
         onRefresh: _loadActivities,
         child: CustomScrollView(
           slivers: [
-            // --- SECTION STATUT SÉCURITÉ ---
+            // --- HEADER MODE GHOST ---
             SliverToBoxAdapter(child: _buildStatusHeader()),
 
+            // --- CARTES DE STATS RAPIDES ---
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
-                    _statMiniCard("TOTAL 7J", "${_calculateWeeklyTotal().toStringAsFixed(1)} KM", Colors.orange[900]!),
+                    _statMiniCard("TOTAL 7J", "${_calculateWeeklyTotal().toStringAsFixed(1)} KM", Colors.orange),
                     const SizedBox(width: 10),
-                    _statMiniCard("MISSIONS", "${_activities.length}", Colors.black),
+                    _statMiniCard("MISSIONS", "${_activities.length}", Colors.white),
                   ],
                 ),
               ),
             ),
 
-            // --- LISTE DES ACTIVITÉS ---
+            // --- LISTE DES ACTIVITÉS (STYLE STRAVA DARK) ---
             _activities.isEmpty
                 ? const SliverFillRemaining(
               child: Center(
-                  child: Text(
-                      'AUCUNE MISSION ENREGISTRÉE',
-                      style: TextStyle(color: Colors.black45, fontWeight: FontWeight.bold)
-                  )
-              ),
+                  child: Text('AUCUNE MISSION ENREGISTRÉE',
+                      style: TextStyle(color: Colors.white24, fontWeight: FontWeight.bold))),
             )
                 : SliverList(
               delegate: SliverChildBuilderDelegate(
-                // CORRECTION ICI : Ajout du context dans l'appel
                     (context, index) => _buildActivityCard(context, _activities[index]),
                 childCount: _activities.length,
               ),
@@ -112,10 +110,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.go('/record'),
-        label: const Text(
-            'NOUVELLE MISSION',
-            style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0)
-        ),
+        label: const Text('NOUVELLE MISSION',
+            style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0, color: Colors.white)),
         icon: const Icon(Icons.add_location_alt, color: Colors.white),
         backgroundColor: const Color(0xFFFF4500),
         elevation: 6,
@@ -123,19 +119,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // --- WIDGETS DE COMPOSANTS ---
+
   Widget _statMiniCard(String label, String value, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF1E1E2E),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: Colors.white10),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black54)),
+            Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54)),
             Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
           ],
         ),
@@ -143,18 +141,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-
   Widget _buildStatusHeader() {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
       decoration: BoxDecoration(
-          color: const Color(0xFF1B3A2D), // Vert militaire profond
+          color: const Color(0xFF1B3A2D),
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))
-          ]
-      ),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))]),
       child: Row(
         children: [
           const Icon(Icons.shield, color: Colors.greenAccent, size: 22),
@@ -163,15 +157,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Text(
-                    'MODE GHOST ACTIF',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)
-                ),
+                Text('MODE GHOST ACTIF',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
                 SizedBox(height: 2),
-                Text(
-                    'Chiffrement AES-256 & Fuzzing GPS opérationnels',
-                    style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)
-                ),
+                Text('Chiffrement AES-256 opérationnel',
+                    style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -181,76 +171,80 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildActivityCard(BuildContext context, Map<String, dynamic> activity) {
-    final sport = activity['sport_type'] ?? 'run';
-    final distance = (activity['distance'] ?? 0.0) as double;
-    final timestamp = DateTime.parse(activity['timestamp']);
+    final ts = DateTime.parse(activity['timestamp'] as String);
+    final sport = activity['sport'] as String? ?? 'run';
+    final distance = (activity['distance'] as num?)?.toDouble() ?? 0.0;
+    final duration = (activity['duration_seconds'] as num?)?.toInt() ?? 0;
+    final pace = activity['pace'] as String? ?? '';
+
+    final sportType = SportType.values.firstWhere(
+          (s) => s.name == sport,
+      orElse: () => SportType.running,
+    );
+
+    final h = duration ~/ 3600;
+    final m = (duration % 3600) ~/ 60;
+    final s = duration % 60;
+    final durationStr = h > 0 ? '${h}h${m.toString().padLeft(2, '0')}' : '${m}min${s.toString().padLeft(2, '0')}s';
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      elevation: 0,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: const Color(0xFF1E1E2E),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[300]!, width: 1),
-      ),
-      child: ListTile(
         onTap: () => context.push('/activity', extra: activity),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: sport == 'run' ? Colors.orange[50] : Colors.blue[50],
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            sport == 'run' ? Icons.directions_run : Icons.directions_bike,
-            color: sport == 'run' ? Colors.orange[900] : Colors.blue[900],
-            size: 26,
-          ),
-        ),
-        title: Text(
-          sport == 'run' ? "COURSE À PIED" : "SORTIE VÉLO",
-          style: const TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w900,
-              fontSize: 14,
-              letterSpacing: 0.5
-          ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4.0),
-          child: Text(
-            "${timestamp.day}/${timestamp.month}/${timestamp.year} • ${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}",
-            style: const TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              "${distance.toStringAsFixed(2)}",
-              style: const TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.w900,
-                fontSize: 20,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(sportType.emoji, style: const TextStyle(fontSize: 22)),
+                  const SizedBox(width: 8),
+                  Text(sportType.label.toUpperCase(),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white, letterSpacing: 1)),
+                  const Spacer(),
+                  const Icon(Icons.lock, color: Colors.greenAccent, size: 14),
+                ],
               ),
-            ),
-            const Text(
-              "KM",
-              style: TextStyle(
-                color: Colors.black54,
-                fontWeight: FontWeight.w900,
-                fontSize: 10,
+              const SizedBox(height: 4),
+              Text(
+                '${ts.day}/${ts.month}/${ts.year} · ${ts.hour}h${ts.minute.toString().padLeft(2, '0')}',
+                style: const TextStyle(color: Colors.white38, fontSize: 11),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _DashStat(label: 'Distance', value: '${distance.toStringAsFixed(2)} km'),
+                  _DashStat(label: 'Durée', value: durationStr),
+                  if (pace.isNotEmpty) _DashStat(label: 'Allure', value: '$pace/km'),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+// --- TON NOUVEAU WIDGET DE STATS ---
+class _DashStat extends StatelessWidget {
+  final String label;
+  final String value;
+  const _DashStat({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(value,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11)),
+      ],
     );
   }
 }

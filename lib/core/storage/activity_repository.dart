@@ -35,39 +35,33 @@ class ActivityRepository {
   Future<void> saveActivity({
     required List<(double, double)> points,
     required DateTime timestamp,
+    required String sport,
     required int durationSeconds,
-    required double ascent,
-    required String sportType, // 'run' ou 'bike'
-    required double realDistance,
+    required double distanceKm,
   }) async {
     await _ensureInit();
     final key = await _getMasterKey();
 
-    // 1. Calcul de la distance totale en KM (backend-side)
-    double totalDistance = 0;
-    const Distance distanceCalc = Distance();
-    for (int i = 0; i < points.length - 1; i++) {
-      totalDistance += distanceCalc(
-        LatLng(points[i].$1, points[i].$2),
-        LatLng(points[i + 1].$1, points[i + 1].$2),
-      );
+    // Calcul allure (min/km) — uniquement pour course/marche/vélo
+    String pace = '';
+    if (distanceKm > 0 && durationSeconds > 0) {
+      final secPerKm = durationSeconds / distanceKm;
+      final min = (secPerKm / 60).floor();
+      final sec = (secPerKm % 60).round();
+      pace = "$min'${sec.toString().padLeft(2, '0')}\"";
     }
-    final distanceKm = totalDistance / 1000;
 
-    // 2. Création du Payload enrichi
     final payload = jsonEncode({
       'timestamp': timestamp.toIso8601String(),
       'points': points.map((p) => [p.$1, p.$2]).toList(),
       'count': points.length,
-      'distance': realDistance,
-      'duration': durationSeconds,
-      'ascent': ascent,
-      'sport_type': sportType,
+      'sport': sport,
+      'duration_seconds': durationSeconds,
+      'distance_km': distanceKm,
+      'pace': pace,
     });
 
-    // 3. Chiffrement AES-256
     final encrypted = _crypto.encrypt(payload, key);
-
     final db = await LocalDb().database;
     await db.insert('encrypted_traces', {
       'timestamp': timestamp.toIso8601String(),
