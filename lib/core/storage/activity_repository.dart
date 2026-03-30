@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:latlong2/latlong.dart'; // Ajouté pour le calcul de distance
 import '../security/crypto_service.dart';
 import '../security/key_manager.dart';
 import 'local_db.dart';
+
 
 class ActivityRepository {
   final _crypto = CryptoService();

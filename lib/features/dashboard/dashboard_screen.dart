@@ -22,7 +22,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final ts = a['timestamp'];
       if (ts == null) return false;
       return DateTime.parse(ts as String).isAfter(weekAgo);
-    }).fold(0.0, (sum, a) => sum + ((a['distance'] as num?) ?? 0.0));
+    }).fold(0.0, (sum, a) => sum + ((a['distance_km'] as num?) ?? 0.0));
   }
 
   @override
@@ -59,6 +59,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           onPressed: () => context.go('/login'),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline, color: Colors.white70),
+            onPressed: () => context.go('/profile'),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white70),
             onPressed: () {
@@ -148,15 +152,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       decoration: BoxDecoration(
           color: const Color(0xFF1B3A2D),
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))]),
-      child: Row(
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 4, offset: const Offset(0, 2))]),
+      child: const Row(
         children: [
-          const Icon(Icons.shield, color: Colors.greenAccent, size: 22),
-          const SizedBox(width: 12),
+          Icon(Icons.shield, color: Colors.greenAccent, size: 22),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text('MODE GHOST ACTIF',
                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
                 SizedBox(height: 2),
@@ -173,7 +177,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildActivityCard(BuildContext context, Map<String, dynamic> activity) {
     final ts = DateTime.parse(activity['timestamp'] as String);
     final sport = activity['sport'] as String? ?? 'run';
-    final distance = (activity['distance'] as num?)?.toDouble() ?? 0.0;
+    final distance = (activity['distance_km'] as num?)?.toDouble() ?? 0.0;
     final duration = (activity['duration_seconds'] as num?)?.toInt() ?? 0;
     final pace = activity['pace'] as String? ?? '';
 
@@ -193,7 +197,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => context.push('/activity', extra: activity),
+        onTap: () => context.go('/activity', extra: activity),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

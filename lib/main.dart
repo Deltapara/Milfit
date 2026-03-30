@@ -10,6 +10,7 @@ import 'features/auth/login_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/activity/record_screen.dart';
 import 'features/activity/activity_detail_screen.dart';
+import 'features/profile/profile_screen.dart';
 
 void main() async {
   // 1. Indispensable pour l'accès aux couches basses (GPS, Crypto)
@@ -22,7 +23,7 @@ void main() async {
     debugPrint("SÉCURITÉ : Moteur Sodium prêt.");
   } catch (e) {
     debugPrint("ALERTE : Échec de l'initialisation crypto : $e");
-    return; // Kill switch
+    //return; // Kill switch
   }
 
   // 3. Pré-ouverture de la base SQLCipher (Initialise la clé maîtresse)
@@ -74,5 +75,6 @@ final _router = GoRouter(
     GoRoute(path: '/dashboard', builder: (ctx, state) => const DashboardScreen()),
     GoRoute(path: '/record', builder: (ctx, state) => const RecordScreen()),
     GoRoute(path: '/activity', builder: (ctx, state) => ActivityDetailScreen(activity: state.extra as Map<String, dynamic>,),),
+    GoRoute(path: '/profile', builder: (ctx, state) => const ProfileScreen()),
   ],
 );

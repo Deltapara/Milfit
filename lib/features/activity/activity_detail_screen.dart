@@ -137,7 +137,7 @@ class ActivityDetailScreen extends StatelessWidget {
                       _StatCard(
                         icon: Icons.straighten,
                         label: 'Distance',
-                        value: '${((activity['distance'] as num?) ?? 0).toStringAsFixed(2)} km',
+                        value: '${((activity['distance_km'] as num?) ?? 0).toStringAsFixed(2)} km',
                       ),
                       _StatCard(
                         icon: Icons.timer,
@@ -160,7 +160,7 @@ class ActivityDetailScreen extends StatelessWidget {
                         label: 'Distance calculée',
                         value: '${_estimateDistance(points).toStringAsFixed(2)} km',
                       ),
-                      _StatCard(
+                      const _StatCard(
                         icon: Icons.lock,
                         label: 'Sécurité',
                         value: 'AES-256 · Brouillé',

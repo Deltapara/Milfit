@@ -3,7 +3,6 @@ import 'dart:math';
 /// Brouille les points de départ et d'arrivée d'une trace GPS
 /// pour masquer l'emplacement exact des installations militaires.
 class GpsFuzzer {
-  static const double _earthRadiusMeters = 6371000.0;
 
   /// Applique un bruit gaussien d'environ [radiusMeters] mètres
   /// autour du point d'origine.

@@ -7,7 +7,9 @@ plugins {
 
 android {
     namespace = "fr.defense.milfit.milfit"
-    compileSdk = flutter.compileSdkVersion
+
+    // 1. On utilise le SDK 36 pour la compilation (exigé par les plugins)
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -21,18 +23,30 @@ android {
 
     defaultConfig {
         applicationId = "fr.defense.milfit.milfit"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+
+        // 2. IMPORTANT : On garde le Target à 34 pour ton téléphone.
+        // C'est ce paramètre qui évite le blocage des 16 KB au lancement.
+        targetSdk = 34
+
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    // 3. On garde l'extraction forcée pour Sodium et SQLCipher
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     buildTypes {
         release {
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // On laisse false pour le moment pour stabiliser
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
